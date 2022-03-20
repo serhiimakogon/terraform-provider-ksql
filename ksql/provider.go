@@ -12,19 +12,19 @@ func Provider() *schema.Provider {
 		Schema: map[string]*schema.Schema{
 			"url": {
 				Type:        schema.TypeString,
-				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("KSQLDB_URL", nil),
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("KSQLDB_URL", ""),
 			},
 			"username": {
 				Type:        schema.TypeString,
-				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("KSQLDB_USERNAME", nil),
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("KSQLDB_USERNAME", ""),
 			},
 			"password": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Sensitive:   true,
-				DefaultFunc: schema.EnvDefaultFunc("KSQLDB_PASSWORD", nil),
+				DefaultFunc: schema.EnvDefaultFunc("KSQLDB_PASSWORD", ""),
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
