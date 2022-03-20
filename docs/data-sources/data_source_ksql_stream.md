@@ -1,8 +1,6 @@
 ---
-subcategory: "KSQL Streams"
 page_title: "KSQL: ksql_stream"
-description: |-
-Provides a KSQL Stream data source.
+subcategory: "KSQL Streams"
 ---
 
 # Data Source: ksql_stream
