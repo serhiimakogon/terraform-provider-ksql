@@ -31,7 +31,8 @@ func Provider() *schema.Provider {
 			"ksql_stream": resourceStream(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"ksql_stream": dataSourceStream(),
+			"ksql_stream":  dataSourceStream(),
+			"ksql_streams": dataSourceStreams(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
