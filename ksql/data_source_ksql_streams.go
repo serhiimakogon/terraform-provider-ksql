@@ -58,20 +58,20 @@ func dataSourceStreamsRead(ctx context.Context, d *schema.ResourceData, m interf
 	tag := d.Get("tag").(string)
 	topic := d.Get("topic").(string)
 
-	if &tag != nil && &topic != nil {
+	if tag != "" && topic != "" {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  "only one filter type is allowed.",
 		})
 		return diags
 
-	} else if &tag != nil {
+	} else if tag != "" {
 		streams, err = client.GetStreamsByTag(tag)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-	} else if &topic != nil {
+	} else if topic != "" {
 		streams, err = client.GetStreamsByTopic(topic)
 		if err != nil {
 			return diag.FromErr(err)
