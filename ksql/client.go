@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 )
 
@@ -174,9 +173,4 @@ func (ksql *Client) makePostRequest(payload Payload) (Response, error) {
 	}
 
 	return response, nil
-}
-
-func main() {
-	client := NewClient(os.Getenv("KSQLDB_URL"), os.Getenv("KSQLDB_USERNAME"), os.Getenv("KSQLDB_PASSWORD"))
-	fmt.Println(client.CreateStream("TEST_STREAM_02", "AS SELECT * FROM KSQL_PROCESSING_LOG"))
 }
