@@ -75,7 +75,7 @@ func (ksql *Client) GetStreamByName(streamName string) (*Stream, error) {
 	}
 
 	for _, stream := range listStreams {
-		if stream.Name == streamName {
+		if strings.EqualFold(stream.Name, streamName) {
 			return &stream, nil
 		}
 	}
@@ -91,7 +91,7 @@ func (ksql *Client) GetStreamsByTopic(topicName string) ([]Stream, error) {
 
 	streams := []Stream{}
 	for _, stream := range listStreams {
-		if stream.Topic == topicName {
+		if strings.EqualFold(stream.Topic, topicName) {
 			streams = append(streams, stream)
 		}
 	}
@@ -117,7 +117,22 @@ func (ksql *Client) GetStreamsByTag(tag string) ([]Stream, error) {
 
 func (ksql *Client) CreateStream(streamName string, query string) (Response, error) {
 	payload := Payload{
-		Ksql: fmt.Sprintf("CREATE STREAM %s %s;", streamName, query),
+		Ksql: fmt.Sprintf("CREATE STREAM %s %s", streamName, query),
+	}
+
+	err := validateStreamName(streamName)
+	if err != nil {
+		return nil, err
+	}
+
+	err = validateQuery(query)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = ksql.GetStreamByName(streamName)
+	if err == nil {
+		return nil, fmt.Errorf("there is already a stream named %s", streamName)
 	}
 
 	response, err := ksql.makePostRequest(payload)
@@ -135,6 +150,16 @@ func (ksql *Client) CreateStream(streamName string, query string) (Response, err
 func (ksql *Client) DropStream(streamName string) (Response, error) {
 	payload := Payload{
 		Ksql: fmt.Sprintf("DROP STREAM %s;", streamName),
+	}
+
+	err := validateStreamName(streamName)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = ksql.GetStreamByName(streamName)
+	if err != nil {
+		return nil, fmt.Errorf("there is no stream named %s", streamName)
 	}
 
 	response, err := ksql.makePostRequest(payload)
@@ -183,4 +208,21 @@ func (ksql *Client) makePostRequest(payload Payload) (Response, error) {
 	}
 
 	return response, nil
+}
+
+func validateStreamName(streamName string) error {
+	if strings.Contains(streamName, "-") {
+		return fmt.Errorf("stream name should not contain '-' character ")
+	}
+
+	return nil
+}
+
+func validateQuery(query string) error {
+	lastCharacter := query[len(query)-1:]
+	if lastCharacter != ";" {
+		return fmt.Errorf("query missing ';' at the end ")
+	}
+
+	return nil
 }
