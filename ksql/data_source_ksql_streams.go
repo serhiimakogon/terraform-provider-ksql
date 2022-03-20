@@ -52,7 +52,7 @@ func dataSourceStreamsRead(ctx context.Context, d *schema.ResourceData, m interf
 	client := m.(*Client)
 
 	var diags diag.Diagnostics
-	var streams []Stream
+	var streamsData []Stream
 	var err error
 
 	tag := d.Get("tag").(string)
@@ -66,23 +66,25 @@ func dataSourceStreamsRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diags
 
 	} else if tag != "" {
-		streams, err = client.GetStreamsByTag(tag)
+		streamsData, err = client.GetStreamsByTag(tag)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
 	} else if topic != "" {
-		streams, err = client.GetStreamsByTopic(topic)
+		streamsData, err = client.GetStreamsByTopic(topic)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
 	} else {
-		streams, err = client.ListStreams()
+		streamsData, err = client.ListStreams()
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	}
+
+	streams := flattenStreamsData(streamsData)
 
 	err = d.Set("streams", streams)
 	if err != nil {
@@ -93,4 +95,18 @@ func dataSourceStreamsRead(ctx context.Context, d *schema.ResourceData, m interf
 	d.SetId(id.String())
 
 	return diags
+}
+
+func flattenStreamsData(streamsData []Stream) []map[string]interface{} {
+	streams := make([]map[string]interface{}, len(streamsData))
+
+	for i, s := range streamsData {
+		stream := make(map[string]interface{})
+
+		stream["name"] = s.Name
+		stream["topic"] = s.Topic
+
+		streams[i] = stream
+	}
+	return streams
 }
