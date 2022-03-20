@@ -43,7 +43,7 @@ func dataSourceStreamRead(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(err)
 	}
 
-	d.SetId(response.Name)
+	d.SetId(name)
 
 	return diags
 }
