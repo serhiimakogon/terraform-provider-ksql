@@ -18,6 +18,11 @@ func dataSourceStreams() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
+			"topic": {
+				Description: "The topic to filter the streams.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
 			"streams": {
 				Description: "The streams found.",
 				Type:        schema.TypeList,
@@ -47,10 +52,28 @@ func dataSourceStreamsRead(ctx context.Context, d *schema.ResourceData, m interf
 	var diags diag.Diagnostics
 
 	tag := d.Get("tag").(string)
+	topic := d.Get("topic").(string)
 
-	response, err := client.GetStreamsByTag(tag)
-	if err != nil {
+	if tag != nil && topic != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "only one filter type is allowed.",
+		})
 		return diag.FromErr(err)
+	}
+
+	if tag != nil {
+		response, err := client.GetStreamsByTag(tag)
+		if err != nil {
+			return diag.FromErr(err)
+	} else if topic != nil {
+		response, err := client.GetStreamsByTopic(topic)
+		if err != nil {
+			return diag.FromErr(err)
+	} else { 
+		response, err := client.ListStreams()
+		if err != nil {
+			return diag.FromErr(err)
 	}
 
 	err = d.Set("streams", response)
