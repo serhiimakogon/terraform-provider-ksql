@@ -11,7 +11,7 @@ import (
 func dataSourceStreams() *schema.Resource {
 	return &schema.Resource{
 		Description: "Use this data source to get information about KSQL Streams for use in other resources.",
-		ReadContext: dataSourceStreamRead,
+		ReadContext: dataSourceStreamsRead,
 		Schema: map[string]*schema.Schema{
 			"tag": {
 				Description: "The tag to filter the streams.",
