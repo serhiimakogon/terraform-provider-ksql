@@ -60,7 +60,10 @@ func (ksql *Client) ListStreams() ([]Stream, error) {
 		Ksql: "LIST STREAMS;",
 	}
 
-	response, _ := ksql.makePostRequest(payload)
+	response, err := ksql.makePostRequest(payload)
+	if err != nil {
+		return nil, err
+	}
 
 	return response[0].Streams, nil
 }
@@ -80,7 +83,7 @@ func (ksql *Client) GetStreamByName(streamName string) (*Stream, error) {
 	return nil, fmt.Errorf("there is no stream named %s", streamName)
 }
 
-func (ksql *Client) GetStreamsByTopic(topicName string) (*[]Stream, error) {
+func (ksql *Client) GetStreamsByTopic(topicName string) ([]Stream, error) {
 	listStreams, err := ksql.ListStreams()
 	if err != nil {
 		return nil, err
@@ -93,10 +96,10 @@ func (ksql *Client) GetStreamsByTopic(topicName string) (*[]Stream, error) {
 		}
 	}
 
-	return &streams, nil
+	return streams, nil
 }
 
-func (ksql *Client) GetStreamsByTag(tag string) (*[]Stream, error) {
+func (ksql *Client) GetStreamsByTag(tag string) ([]Stream, error) {
 	listStreams, err := ksql.ListStreams()
 	if err != nil {
 		return nil, err
@@ -109,7 +112,7 @@ func (ksql *Client) GetStreamsByTag(tag string) (*[]Stream, error) {
 		}
 	}
 
-	return &streams, nil
+	return streams, nil
 }
 
 func (ksql *Client) CreateStream(streamName string, query string) (Response, error) {
@@ -117,7 +120,10 @@ func (ksql *Client) CreateStream(streamName string, query string) (Response, err
 		Ksql: fmt.Sprintf("CREATE STREAM %s %s;", streamName, query),
 	}
 
-	response, _ := ksql.makePostRequest(payload)
+	response, err := ksql.makePostRequest(payload)
+	if err != nil {
+		return nil, err
+	}
 
 	if response[0].ErrorCode != 0 {
 		return nil, errors.New(response[0].Message)
@@ -131,7 +137,10 @@ func (ksql *Client) DropStream(streamName string) (Response, error) {
 		Ksql: fmt.Sprintf("DROP STREAM %s;", streamName),
 	}
 
-	response, _ := ksql.makePostRequest(payload)
+	response, err := ksql.makePostRequest(payload)
+	if err != nil {
+		return nil, err
+	}
 
 	if response[0].ErrorCode != 0 {
 		return nil, errors.New(response[0].Message)
