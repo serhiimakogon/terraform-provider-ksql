@@ -13,7 +13,7 @@ func dataSourceStream() *schema.Resource {
 		ReadContext: dataSourceStreamRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Description: "The name of the stream.",
+				Description: "The name of the stream. Case insensitive.",
 				Type:        schema.TypeString,
 				Required:    true,
 			},

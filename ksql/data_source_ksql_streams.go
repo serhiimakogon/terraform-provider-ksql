@@ -14,13 +14,13 @@ func dataSourceStreams() *schema.Resource {
 		ReadContext: dataSourceStreamsRead,
 		Schema: map[string]*schema.Schema{
 			"tag": {
-				Description: "The tag to filter the streams.",
+				Description: "The tag to filter the streams. Case sensitive.",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     nil,
 			},
 			"topic": {
-				Description: "The topic to filter the streams.",
+				Description: "The topic to filter the streams. Case sensitive.",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     nil,

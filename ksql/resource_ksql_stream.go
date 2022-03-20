@@ -15,7 +15,7 @@ func resourceStream() *schema.Resource {
 		DeleteContext: resourceStreamDelete,
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Description: "The name of the stream.",
+				Description: "The name of the stream. Case insensitive.",
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
