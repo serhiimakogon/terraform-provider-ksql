@@ -13,7 +13,7 @@ func Provider() *schema.Provider {
 			"url": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("KSQLDB_URL", ""),
+				DefaultFunc: schema.EnvDefaultFunc("KSQLDB_URL", "http://localhost:8088"),
 			},
 			"username": {
 				Type:        schema.TypeString,
@@ -45,17 +45,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 
 	var diags diag.Diagnostics
 
-	if (url != "") && (username != "") && (password != "") {
-		client := NewClient(url, username, password)
+	client := NewClient(url, username, password)
 
-		return client, diags
-	}
-
-	diags = append(diags, diag.Diagnostic{
-		Severity: diag.Error,
-		Summary:  "Unable to create Ksql client",
-		Detail:   "Unable to create anonymous Ksql client",
-	})
-
-	return nil, diags
+	return client, diags
 }
