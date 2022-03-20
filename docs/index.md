@@ -17,7 +17,7 @@ terraform {
   required_providers {
     ksql = {
       source = "gabriel-aranha/ksql"
-      version = "1.0.7-pre"
+      version = "1.0.9-pre"
     }
   }
 }
@@ -26,9 +26,12 @@ provider "ksql" {
   # Configuration options
 }
 
-resource "ksql_stream" "stream" {
-  name  = "STREAM_01"
-  query = "AS SELECT * FROM STREAM_00;"
+data "ksql_stream" "main" {
+  name = "test_stream"
+}
+
+output "stream_name" {
+  value = data.ksql_stream.main.name
 }
 ```
 
@@ -38,7 +41,7 @@ Authentication can be provided by environment variables or provider configuratio
 
 ### Environment Variables
 
-Credentials can be provided by using the KSQLDB_URL, KSQLDB_USERNAME, and KSQLDB_PASSWORD environment variables.
+Credentials can be provided by using the `KSQLDB_URL`, `KSQLDB_USERNAME`, and `KSQLDB_PASSWORD` environment variables.
 
 For example:
 
@@ -54,7 +57,7 @@ $ export KSQLDB_PASSWORD="yourksqldbpassword"
 
 ### Provider Block Configuration
 
-Although not recommended, it is possible to set the credential variables in the provider configuration block as follow:
+Although not recommended, it is possible to set the credential variables in the provider configuration block as follows:
 
 ```terraform
 provider "ksql" {

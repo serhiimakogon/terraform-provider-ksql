@@ -31,13 +31,14 @@ data "ksql_streams" "stream" {
 ```
 
 ## Argument Reference
+Currently this data source does not allow setting both `tag` and `topic` variables at the same time.
 
 * `tag` - (Optional) The tag to filter the streams. Case sensitive.
 * `topic` - (Optional) The topic to filter the streams. Case sensitive.
 
 ## Attributes Reference
 
-`id` is set to a random UUID. In addition, the following attributes
+`id` is set to a random `UUID`. In addition, the following attributes
 are exported:
 
 * `streams` - The list of streams found. Can be empty if no streams are found.

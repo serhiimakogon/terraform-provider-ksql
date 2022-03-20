@@ -1,6 +1,6 @@
 NAME=ksql
 BINARY=terraform-provider-${NAME}
-VERSION=1.0.7-pre
+VERSION=1.0.9-pre
 OS_ARCH=darwin_amd64
 
 default: install
