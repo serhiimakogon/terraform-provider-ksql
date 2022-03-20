@@ -21,7 +21,7 @@ func resourceStream() *schema.Resource {
 				ForceNew:    true,
 			},
 			"query": {
-				Description: "The statement to create the stream",
+				Description: "The statement to create the stream.",
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
