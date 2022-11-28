@@ -1,6 +1,6 @@
 # Terraform Provider for KSQL
 
-[User Documentation](https://registry.terraform.io/providers/gabriel-aranha/ksql/latest/docs)
+[User Documentation](https://registry.terraform.io/providers/serhiimakogon/ksql/latest/docs)
 
 ## Requirements
 
