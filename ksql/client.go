@@ -185,7 +185,7 @@ func (ksql *Client) makePostRequest(payload Payload) (Response, error) {
 		return nil, err
 	}
 
-	req = req.WithContext(ksql)
+	req = req.WithContext(context.Background())
 
 	req.SetBasicAuth(ksql.apiKey, ksql.apiSecret)
 
