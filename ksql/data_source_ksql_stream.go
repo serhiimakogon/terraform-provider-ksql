@@ -29,6 +29,10 @@ func dataSourceStream() *schema.Resource {
 func dataSourceStreamRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
 
+	client.url = extractStringValueFromBlock(d, "credentials", "url")
+	client.apiKey = extractStringValueFromBlock(d, "credentials", "key")
+	client.apiSecret = extractStringValueFromBlock(d, "credentials", "secret")
+
 	var diags diag.Diagnostics
 
 	name := d.Get("name").(string)

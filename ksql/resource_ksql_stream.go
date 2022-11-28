@@ -91,6 +91,10 @@ func resourceStreamCreate(ctx context.Context, d *schema.ResourceData, m interfa
 func resourceStreamRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
 
+	client.url = extractStringValueFromBlock(d, "credentials", "url")
+	client.apiKey = extractStringValueFromBlock(d, "credentials", "key")
+	client.apiSecret = extractStringValueFromBlock(d, "credentials", "secret")
+
 	var diags diag.Diagnostics
 
 	name := d.Get("name").(string)
@@ -105,6 +109,10 @@ func resourceStreamRead(ctx context.Context, d *schema.ResourceData, m interface
 
 func resourceStreamDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
+
+	client.url = extractStringValueFromBlock(d, "credentials", "url")
+	client.apiKey = extractStringValueFromBlock(d, "credentials", "key")
+	client.apiSecret = extractStringValueFromBlock(d, "credentials", "secret")
 
 	var diags diag.Diagnostics
 

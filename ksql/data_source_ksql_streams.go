@@ -51,6 +51,10 @@ func dataSourceStreams() *schema.Resource {
 func dataSourceStreamsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
 
+	client.url = extractStringValueFromBlock(d, "credentials", "url")
+	client.apiKey = extractStringValueFromBlock(d, "credentials", "key")
+	client.apiSecret = extractStringValueFromBlock(d, "credentials", "secret")
+
 	var diags diag.Diagnostics
 	var streamsData []Stream
 	var err error

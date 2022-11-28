@@ -7,10 +7,6 @@ terraform {
   }
 }
 
-provider "ksql" {
-  # Configuration options
-}
-
 data "ksql_stream" "main" {
   name = "test_stream"
 }
