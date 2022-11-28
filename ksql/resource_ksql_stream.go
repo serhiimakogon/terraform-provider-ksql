@@ -34,6 +34,7 @@ func resourceStream() *schema.Resource {
 				MinItems:    1,
 				MaxItems:    1,
 				Sensitive:   true,
+				ForceNew:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"url": {

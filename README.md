@@ -12,7 +12,7 @@
 Clone this repository, enter the provider directory, build and install the provider:
 
 ```sh
-$ git clone https://github.com/gabriel-aranha/terraform-provider-ksql.git
+$ git clone https://github.com/serhiimakogon/terraform-provider-ksql.git
 $ cd terraform-provider-ksql
 $ make install
 ```
