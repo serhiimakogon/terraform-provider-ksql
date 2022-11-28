@@ -36,6 +36,12 @@ func resourceStream() *schema.Resource {
 				Sensitive:   true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"url": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The KSQL Cluster API URL for your Confluent Cloud cluster.",
+							Sensitive:   true,
+						},
 						"key": {
 							Type:        schema.TypeString,
 							Required:    true,

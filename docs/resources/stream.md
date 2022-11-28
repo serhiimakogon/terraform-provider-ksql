@@ -35,5 +35,6 @@ Required:
 
 - `key` (String, Sensitive) The KSQL Cluster API Key for your Confluent Cloud cluster.
 - `secret` (String, Sensitive) The KSQL Cluster API Secret for your Confluent Cloud cluster.
+- `url` (String, Sensitive) The KSQL Cluster API URL for your Confluent Cloud cluster.
 
 
