@@ -40,8 +40,8 @@ type Payload struct {
 	Ksql string `json:"ksql"`
 }
 
-func NewClient(url string, username string, password string) *Client {
-	return NewClientContext(context.Background(), url, username, password)
+func NewEmptyClient(ctx context.Context) *Client {
+	return NewClientContext(ctx, "", "", "")
 }
 
 func NewClientContext(ctx context.Context, url, apiKey, apiSecret string) *Client {
