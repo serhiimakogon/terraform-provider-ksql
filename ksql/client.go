@@ -204,7 +204,7 @@ func (ksql *Client) makePostRequest(payload Payload) (Response, error) {
 	response := Response{}
 	err = json.Unmarshal(body, &response)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarshal: %s, err: %v", string(body), err)
 	}
 
 	return response, nil
