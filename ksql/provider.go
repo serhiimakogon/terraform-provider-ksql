@@ -15,16 +15,16 @@ func Provider() *schema.Provider {
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("KSQLDB_URL", "http://localhost:8088"),
 			},
-			"username": {
+			"api_key": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("KSQLDB_USERNAME", ""),
+				DefaultFunc: schema.EnvDefaultFunc("KSQLDB_API_KEY", ""),
 			},
-			"password": {
+			"api_secret": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Sensitive:   true,
-				DefaultFunc: schema.EnvDefaultFunc("KSQLDB_PASSWORD", ""),
+				DefaultFunc: schema.EnvDefaultFunc("KSQLDB_API_SECRET", ""),
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{

@@ -6,17 +6,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 )
 
 type Client struct {
 	context.Context
-	client   *http.Client
-	url      string
-	username string
-	password string
+	cli       *http.Client
+	url       string
+	apiKey    string
+	apiSecret string
 }
 
 type CommandStatus struct {
@@ -44,13 +44,13 @@ func NewClient(url string, username string, password string) *Client {
 	return NewClientContext(context.Background(), url, username, password)
 }
 
-func NewClientContext(ctx context.Context, url string, username string, password string) *Client {
+func NewClientContext(ctx context.Context, url, apiKey, apiSecret string) *Client {
 	client := &Client{
-		Context:  ctx,
-		url:      url,
-		username: username,
-		password: password,
-		client:   &http.Client{},
+		Context:   ctx,
+		url:       url,
+		apiKey:    apiKey,
+		apiSecret: apiSecret,
+		cli:       &http.Client{},
 	}
 	return client
 }
@@ -187,16 +187,16 @@ func (ksql *Client) makePostRequest(payload Payload) (Response, error) {
 
 	req = req.WithContext(ksql)
 
-	req.SetBasicAuth(ksql.username, ksql.password)
+	req.SetBasicAuth(ksql.apiKey, ksql.apiSecret)
 
-	resp, err := ksql.client.Do(req)
+	resp, err := ksql.cli.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}

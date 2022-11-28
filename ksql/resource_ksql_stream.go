@@ -64,8 +64,8 @@ func resourceStreamCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	client := m.(*Client)
 
 	client.url = extractStringValueFromBlock(d, "credentials", "url")
-	client.username = extractStringValueFromBlock(d, "credentials", "key")
-	client.password = extractStringValueFromBlock(d, "credentials", "secret")
+	client.apiKey = extractStringValueFromBlock(d, "credentials", "key")
+	client.apiSecret = extractStringValueFromBlock(d, "credentials", "secret")
 
 	var diags diag.Diagnostics
 
