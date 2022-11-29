@@ -1,0 +1,122 @@
+package client
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"github.com/google/uuid"
+	"io"
+	"net/http"
+	"strings"
+	"text/template"
+)
+
+type Client struct {
+	cli      *http.Client
+	url      string
+	username string
+	password string
+}
+
+func New(url, username, password string) *Client {
+	return &Client{
+		url:      url,
+		username: username,
+		password: password,
+		cli:      &http.Client{},
+	}
+}
+
+func (c *Client) RotateCredentials(url, username, password string) {
+	if url != "" {
+		c.url = url
+	}
+	if username != "" {
+		c.username = username
+	}
+	if password != "" {
+		c.password = password
+	}
+}
+
+func (c *Client) ExecuteQuery(ctx context.Context, query string, params map[string]interface{}) (string, error) {
+	t, err := template.New("query").Parse(query)
+	if err != nil {
+		return "", err
+	}
+
+	buf := &bytes.Buffer{}
+	err = t.Execute(buf, params)
+	if err != nil {
+		return "", err
+	}
+
+	res, err := c.makePostKsqlRequest(ctx, buf.String())
+	if err != nil {
+		return "", err
+	}
+
+	for i, r := range res {
+		if r.ErrorCode != 0 {
+			return "", errors.New(res[i].Message)
+		}
+	}
+
+	return ExtractNameFromQuery(query), nil
+}
+
+func (c *Client) makePostKsqlRequest(ctx context.Context, query string) (Response, error) {
+	b, err := json.Marshal(map[string]interface{}{"ksql": query})
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s/ksql", c.url), bytes.NewBuffer(b))
+	if err != nil {
+		return nil, err
+	}
+	req.SetBasicAuth(c.username, c.password)
+
+	resp, err := c.cli.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	res := Response{}
+	err = json.Unmarshal(body, &res)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal: %s, err: %v", string(body), err)
+	}
+
+	return res, nil
+}
+
+func ExtractNameFromQuery(query string) string {
+	// keywords that may be present before object name
+	var keywords = map[string]bool{
+		"CREATE":  true,
+		"DROP":    true,
+		"OR":      true,
+		"REPLACE": true,
+		"TABLE":   true,
+		"STREAM":  true,
+	}
+
+	words := strings.Split(query, " ")
+	for _, word := range words {
+		if !keywords[word] {
+			return word
+		}
+	}
+
+	return uuid.New().String() // random
+}
