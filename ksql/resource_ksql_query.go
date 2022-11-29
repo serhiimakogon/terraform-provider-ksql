@@ -42,21 +42,24 @@ func resourceQuery() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"url": {
 							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The KSQL Cluster API URL for your Confluent Cloud cluster.",
+							Optional:    true,
 							Sensitive:   true,
+							DefaultFunc: schema.EnvDefaultFunc("KSQL_URL", ""),
+							Description: "The KSQL URL.",
 						},
-						"key": {
+						"username": {
 							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The KSQL Cluster API Key for your Confluent Cloud cluster.",
+							Optional:    true,
 							Sensitive:   true,
+							DefaultFunc: schema.EnvDefaultFunc("KSQL_USERNAME", ""),
+							Description: "The KSQL username.",
 						},
-						"secret": {
+						"password": {
 							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The KSQL Cluster API Secret for your Confluent Cloud cluster.",
+							Optional:    true,
 							Sensitive:   true,
+							DefaultFunc: schema.EnvDefaultFunc("KSQL_PASSWORD", ""),
+							Description: "The KSQL password.",
 						},
 					},
 				},
@@ -67,7 +70,11 @@ func resourceQuery() *schema.Resource {
 
 func extractStringValueFromBlock(d *schema.ResourceData, blockName string, attribute string) string {
 	// d.Get() will return "" if the key is not present
-	return d.Get(fmt.Sprintf("%s.0.%s", blockName, attribute)).(string)
+	v, ok := d.Get(fmt.Sprintf("%s.0.%s", blockName, attribute)).(string)
+	if !ok {
+		return ""
+	}
+	return v
 }
 
 func resourceQueryCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
