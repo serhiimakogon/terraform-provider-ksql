@@ -1,6 +1,7 @@
 package ksql
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 
@@ -36,6 +37,13 @@ func resourceQuery() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 			},
+			"delete_topic_on_destroy": {
+				Description: "Delete topic on destroy.",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				ForceNew:    true,
+				Default:     false,
+			},
 			"credentials": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -50,21 +58,18 @@ func resourceQuery() *schema.Resource {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Sensitive:   true,
-							DefaultFunc: schema.EnvDefaultFunc("KSQL_URL", ""),
 							Description: "The KSQL URL.",
 						},
 						"username": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Sensitive:   true,
-							DefaultFunc: schema.EnvDefaultFunc("KSQL_USERNAME", ""),
 							Description: "The KSQL username.",
 						},
 						"password": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Sensitive:   true,
-							DefaultFunc: schema.EnvDefaultFunc("KSQL_PASSWORD", ""),
 							Description: "The KSQL password.",
 						},
 					},
@@ -75,7 +80,6 @@ func resourceQuery() *schema.Resource {
 }
 
 func extractStringValueFromBlock(d *schema.ResourceData, blockName string, attribute string) string {
-	// d.Get() will return "" if the key is not present
 	v, ok := d.Get(fmt.Sprintf("%s.0.%s", blockName, attribute)).(string)
 	if !ok {
 		return ""
@@ -135,11 +139,25 @@ func resourceQueryDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	)
 
 	var (
-		diags diag.Diagnostics
-		query = d.Get("query").(string)
+		queryType            = d.Get("type").(string)
+		queryName            = d.Get("name").(string)
+		deleteTopicOnDestroy = d.Get("delete_topic_on_destroy").(bool)
 	)
 
-	tflog.Info(ctx, fmt.Sprintf("Going to delete object [%s]", client.ExtractNameFromQuery(query)))
+	buf := &bytes.Buffer{}
+	buf.WriteString("DROP ")
+	buf.WriteString(queryType)
+	buf.WriteString(" IF EXISTS ")
+	buf.WriteString(queryName)
+	if deleteTopicOnDestroy {
+		buf.WriteString(" DELETE TOPIC ")
+	}
+	buf.WriteString(" ;")
 
-	return diags
+	_, err := cli.ExecuteQuery(ctx, queryName, queryType, buf.String())
+	if err != nil {
+		return diag.Errorf("failed to drop ksql resource %q: %s", d.Id(), err)
+	}
+
+	return nil
 }

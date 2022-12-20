@@ -6,11 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"io"
 	"net/http"
 	"strings"
-
-	"github.com/google/uuid"
+	"time"
 )
 
 type Client struct {
@@ -42,9 +43,26 @@ func (c *Client) RotateCredentials(url, username, password string) {
 }
 
 func (c *Client) ExecuteQuery(ctx context.Context, name, qType, query string) (string, error) {
-	res, err := c.makePostKsqlRequest(ctx, query)
-	if err != nil {
-		return "", err
+	var (
+		err error
+		res Response
+	)
+
+	for _, backoff := range []time.Duration{
+		1 * time.Second,
+		2 * time.Second,
+		4 * time.Second,
+		6 * time.Second,
+		8 * time.Second,
+		10 * time.Second,
+	} {
+		res, err = c.makePostKsqlRequest(ctx, query)
+		if err == nil {
+			break
+		}
+
+		tflog.Warn(ctx, fmt.Sprintf("failed to make post ksql request [%v] retrying...", err))
+		time.Sleep(backoff)
 	}
 
 	for i, r := range res {
