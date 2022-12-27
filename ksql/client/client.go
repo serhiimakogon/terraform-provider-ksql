@@ -66,7 +66,7 @@ func (c *Client) ExecuteQuery(ctx context.Context, name, qType, query string) (s
 
 		if res.ErrorCode != 0 {
 			err = fmt.Errorf("invalid ksql response %s", res.Message)
-			if strings.HasPrefix(query, "DROP") && queryModified {
+			if strings.HasPrefix(query, "DROP") && !queryModified {
 				if terminateQuery, shouldModify := c.getPreHookTerminateQuery(res.Message); shouldModify {
 					query = terminateQuery + " " + query
 				}
