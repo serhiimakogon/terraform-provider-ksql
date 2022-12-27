@@ -64,8 +64,10 @@ func (c *Client) ExecuteQuery(ctx context.Context, name, qType, query string) (s
 		}
 
 		if res.ErrorCode != 0 {
-			if terminateQuery := c.getPreHookTerminateQuery(res.Message); query != "" {
-				query = terminateQuery + " " + query
+			if strings.HasPrefix(query, "DROP") {
+				if terminateQuery := c.getPreHookTerminateQuery(res.Message); query != "" {
+					query = terminateQuery + " " + query
+				}
 			}
 			tflog.Warn(ctx, fmt.Sprintf("failed to make post ksql request [%v] retrying...", err))
 			time.Sleep(backoff)
