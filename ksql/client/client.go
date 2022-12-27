@@ -44,9 +44,8 @@ func (c *Client) RotateCredentials(url, username, password string) {
 
 func (c *Client) ExecuteQuery(ctx context.Context, name, qType, query string) (string, error) {
 	var (
-		queryModified bool
-		err           error
-		res           Response
+		err error
+		res Response
 	)
 
 	for _, backoff := range []time.Duration{
@@ -66,11 +65,10 @@ func (c *Client) ExecuteQuery(ctx context.Context, name, qType, query string) (s
 
 		if res.ErrorCode != 0 {
 			err = fmt.Errorf("invalid ksql response %s", res.Message)
-			if strings.HasPrefix(query, "DROP") && !queryModified {
-				if terminateQuery, shouldModify := c.getPreHookTerminateQuery(res.Message); shouldModify {
-					query = terminateQuery + " " + query
+			if strings.HasPrefix(query, "DROP") {
+				if terminateQuery, shouldTerminate := c.getPreHookTerminateQuery(res.Message); shouldTerminate {
+					_, err = c.ExecuteQuery(ctx, name, qType, terminateQuery)
 				}
-				queryModified = true
 			}
 			tflog.Warn(ctx, fmt.Sprintf("failed to make post ksql request [%v] retrying...", err))
 			time.Sleep(backoff)
@@ -100,7 +98,7 @@ func (c *Client) getPreHookTerminateQuery(msg string) (string, bool) {
 		return "", false
 	}
 
-	return "TERMINATE " + strings.Join(queries, ", ") + " ;", true
+	return "TERMINATE " + strings.Join(queries, ", ") + ";", true
 }
 
 func (c *Client) makePostKsqlRequest(ctx context.Context, query string) (Response, error) {
