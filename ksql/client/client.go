@@ -98,6 +98,10 @@ func (c *Client) makePostKsqlRequest(ctx context.Context, query string) (Respons
 		return nil, err
 	}
 
+	if sc := resp.StatusCode; sc < 200 || sc > 300 {
+		return nil, fmt.Errorf("invalid response status code [%d], body [%s]", sc, string(body))
+	}
+
 	res := Response{}
 	err = json.Unmarshal(body, &res)
 	if err != nil {
