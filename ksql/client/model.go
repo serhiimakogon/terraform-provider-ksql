@@ -1,10 +1,13 @@
 package client
 
-type Response []struct {
+type Response struct {
+	Type          string        `json:"@type"`
 	Streams       []Stream      `json:"streams"`
 	CommandStatus CommandStatus `json:"commandStatus"`
 	ErrorCode     int           `json:"error_code"`
 	Message       string        `json:"message"`
+	Entities      []interface{} `json:"entities"`
+	StatementText string        `json:"statementText"`
 }
 
 type CommandStatus struct {

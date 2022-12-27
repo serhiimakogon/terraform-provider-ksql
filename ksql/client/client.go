@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"io"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 type Client struct {
@@ -57,58 +57,74 @@ func (c *Client) ExecuteQuery(ctx context.Context, name, qType, query string) (s
 		10 * time.Second,
 	} {
 		res, err = c.makePostKsqlRequest(ctx, query)
-		if err == nil {
-			break
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("failed to make post ksql request [%v] retrying...", err))
+			time.Sleep(backoff)
+			continue
 		}
 
-		tflog.Warn(ctx, fmt.Sprintf("failed to make post ksql request [%v] retrying...", err))
-		time.Sleep(backoff)
-	}
-
-	for i, r := range res {
-		if r.ErrorCode != 0 {
-			return "", errors.New(res[i].Message)
+		if res.ErrorCode != 0 {
+			if terminateQuery := c.getPreHookTerminateQuery(res.Message); query != "" {
+				query = terminateQuery + " " + query
+			}
+			tflog.Warn(ctx, fmt.Sprintf("failed to make post ksql request [%v] retrying...", err))
+			time.Sleep(backoff)
+			continue
 		}
+
+		break
 	}
 
 	return qType + "_" + name, nil
 }
 
+func (c *Client) getPreHookTerminateQuery(msg string) string {
+	queries := make([]string, 0)
+	for _, line := range strings.Split(msg, "\n") {
+		if strings.HasPrefix(line, "The following queries") {
+			if items := line[strings.Index(line, "[")+1 : strings.Index(line, "]")]; items != "" {
+				queries = append(queries, strings.Split(items, ",")...)
+			}
+		}
+	}
+	return "TERMINATE " + strings.Join(queries, ", ") + " ;"
+}
+
 func (c *Client) makePostKsqlRequest(ctx context.Context, query string) (Response, error) {
 	b, err := json.Marshal(map[string]interface{}{"ksql": query})
 	if err != nil {
-		return nil, err
+		return Response{}, err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s/ksql", c.url), bytes.NewBuffer(b))
 	if err != nil {
-		return nil, err
+		return Response{}, err
 	}
 	req.SetBasicAuth(c.username, c.password)
 
 	resp, err := c.cli.Do(req)
 	if err != nil {
-		return nil, err
+		return Response{}, err
 	}
 
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return Response{}, err
 	}
 
-	if sc := resp.StatusCode; sc < 200 || sc > 300 {
-		return nil, fmt.Errorf("invalid response status code [%d], body [%s]", sc, string(body))
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		return Response{}, nil
 	}
 
-	res := Response{}
-	err = json.Unmarshal(body, &res)
+	res := &Response{}
+	err = json.Unmarshal(body, res)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal: %s, err: %v", string(body), err)
+		return Response{}, fmt.Errorf("failed to unmarshal: %s, err: %v", string(body), err)
 	}
 
-	return res, nil
+	return *res, nil
 }
 
 func ExtractNameFromQuery(query string) string {
