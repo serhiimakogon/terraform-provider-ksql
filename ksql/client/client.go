@@ -44,8 +44,9 @@ func (c *Client) RotateCredentials(url, username, password string) {
 
 func (c *Client) ExecuteQuery(ctx context.Context, name, qType, query string) (string, error) {
 	var (
-		err error
-		res Response
+		queryModified bool
+		err           error
+		res           Response
 	)
 
 	for _, backoff := range []time.Duration{
@@ -65,10 +66,11 @@ func (c *Client) ExecuteQuery(ctx context.Context, name, qType, query string) (s
 
 		if res.ErrorCode != 0 {
 			err = fmt.Errorf("invalid ksql response %s", res.Message)
-			if strings.HasPrefix(query, "DROP") {
-				if terminateQuery := c.getPreHookTerminateQuery(res.Message); query != "" {
+			if strings.HasPrefix(query, "DROP") && queryModified {
+				if terminateQuery, shouldModify := c.getPreHookTerminateQuery(res.Message); shouldModify {
 					query = terminateQuery + " " + query
 				}
+				queryModified = true
 			}
 			tflog.Warn(ctx, fmt.Sprintf("failed to make post ksql request [%v] retrying...", err))
 			time.Sleep(backoff)
@@ -85,16 +87,20 @@ func (c *Client) ExecuteQuery(ctx context.Context, name, qType, query string) (s
 	return qType + "_" + name, nil
 }
 
-func (c *Client) getPreHookTerminateQuery(msg string) string {
+func (c *Client) getPreHookTerminateQuery(msg string) (string, bool) {
 	queries := make([]string, 0)
 	for _, line := range strings.Split(msg, "\n") {
 		if strings.HasPrefix(line, "The following queries") {
-			if items := line[strings.Index(line, "[")+1 : strings.Index(line, "]")]; items != "" {
+			if items := strings.TrimSpace(line[strings.Index(line, "[")+1 : strings.Index(line, "]")]); items != "" {
 				queries = append(queries, strings.Split(items, ",")...)
 			}
 		}
 	}
-	return "TERMINATE " + strings.Join(queries, ", ") + " ;"
+	if len(queries) == 0 {
+		return "", false
+	}
+
+	return "TERMINATE " + strings.Join(queries, ", ") + " ;", true
 }
 
 func (c *Client) makePostKsqlRequest(ctx context.Context, query string) (Response, error) {
