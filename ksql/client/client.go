@@ -42,7 +42,7 @@ func (c *Client) RotateCredentials(url, username, password string) {
 	}
 }
 
-func (c *Client) ExecuteQuery(ctx context.Context, name, qType, query string) (string, error) {
+func (c *Client) ExecuteQuery(ctx context.Context, name, qType, query string, ignoreAlreadyExists bool) (string, error) {
 	var (
 		err error
 		res Response
@@ -64,10 +64,13 @@ func (c *Client) ExecuteQuery(ctx context.Context, name, qType, query string) (s
 		}
 
 		if res.ErrorCode != 0 {
+			if ignoreAlreadyExists && strings.Contains(res.Message, "already exists") {
+				break
+			}
 			err = fmt.Errorf("invalid ksql response %s", res.Message)
 			if strings.HasPrefix(query, "DROP") {
 				if terminateQuery, shouldTerminate := c.getPreHookTerminateQuery(res.Message); shouldTerminate {
-					_, err = c.ExecuteQuery(ctx, name, qType, terminateQuery)
+					_, err = c.ExecuteQuery(ctx, name, qType, terminateQuery, ignoreAlreadyExists)
 				}
 			}
 			tflog.Warn(ctx, fmt.Sprintf("failed to make post ksql request [%v] retrying...", err))
