@@ -24,6 +24,9 @@ Provides a KSQL Query resource.
 ### Optional
 
 - `credentials` (Block List, Max: 1) The KSQL Cluster API Credentials. (see [below for nested schema](#nestedblock--credentials))
+- `delete_topic_on_destroy` (Boolean) Delete topic on destroy.
+- `ignore_already_exists` (Boolean) Ignore already exists errors.
+- `terminate_persistent_query` (Boolean) Terminate persistent query if needed.
 
 ### Read-Only
 

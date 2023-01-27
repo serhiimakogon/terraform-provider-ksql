@@ -19,3 +19,15 @@ type Stream struct {
 	Name  string `json:"name"`
 	Topic string `json:"topic"`
 }
+
+type QueryResponse struct {
+	Type    string `json:"@type"`
+	Queries []struct {
+		QueryString     string   `json:"queryString"`
+		Sinks           []string `json:"sinks"`
+		SinkKafkaTopics []string `json:"sinkKafkaTopics"`
+		ID              string   `json:"id"`
+		QueryType       string   `json:"queryType"`
+		State           string   `json:"state"`
+	} `json:"queries"`
+}

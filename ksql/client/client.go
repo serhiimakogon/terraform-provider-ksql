@@ -42,10 +42,12 @@ func (c *Client) RotateCredentials(url, username, password string) {
 	}
 }
 
-func (c *Client) ExecuteQuery(ctx context.Context, name, qType, query string, ignoreAlreadyExists bool) (string, error) {
+func (c *Client) ExecuteQuery(ctx context.Context, name, qType, query string, ignoreAlreadyExists, terminatePersistentQuery bool) (string, error) {
 	var (
-		err error
-		res Response
+		err           error
+		res           interface{}
+		resErrCode    float64
+		resErrMessage string
 	)
 
 	for _, backoff := range []time.Duration{
@@ -56,21 +58,43 @@ func (c *Client) ExecuteQuery(ctx context.Context, name, qType, query string, ig
 		8 * time.Second,
 		10 * time.Second,
 	} {
-		res, err = c.makePostKsqlRequest(ctx, query)
+		err = c.makePostKsqlRequestWithUnmarshal(ctx, query,
+			func(r io.Reader) error { return json.NewDecoder(r).Decode(&res) },
+		)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("failed to make post ksql request [%v] retrying...", err))
 			time.Sleep(backoff)
 			continue
 		}
 
-		if res.ErrorCode != 0 {
-			if ignoreAlreadyExists && strings.Contains(res.Message, "already exists") {
+		switch g := res.(type) {
+		case []interface{}:
+			if len(g) == 0 {
 				break
 			}
-			err = fmt.Errorf("invalid ksql response %s", res.Message)
+
+			resErrCode, _ = g[0].(map[string]interface{})["error_code"].(float64)
+			resErrMessage, _ = g[0].(map[string]interface{})["message"].(string)
+		case map[string]interface{}:
+			resErrCode, _ = g["error_code"].(float64)
+			resErrMessage, _ = g["message"].(string)
+		}
+
+		if resErrCode != 0 {
+			if ignoreAlreadyExists && strings.Contains(resErrMessage, "already exists") {
+				break
+			}
+			if terminatePersistentQuery && strings.Contains(resErrMessage, "Upgrades not yet supported") {
+				if err = c.terminatePersistentQuery(ctx, name); err != nil {
+					err = fmt.Errorf("failed to terminate persistent query: %v", err)
+				}
+				continue
+			}
+
+			err = fmt.Errorf("invalid ksql response %s", resErrMessage)
 			if strings.HasPrefix(query, "DROP") {
-				if terminateQuery, shouldTerminate := c.getPreHookTerminateQuery(res.Message); shouldTerminate {
-					_, err = c.ExecuteQuery(ctx, name, qType, terminateQuery, ignoreAlreadyExists)
+				if terminateQuery, shouldTerminate := c.getPreHookTerminateQuery(resErrMessage); shouldTerminate {
+					_, err = c.ExecuteQuery(ctx, name, qType, terminateQuery, ignoreAlreadyExists, terminatePersistentQuery)
 				}
 			}
 			tflog.Warn(ctx, fmt.Sprintf("failed to make post ksql request [%v] retrying...", err))
@@ -104,41 +128,30 @@ func (c *Client) getPreHookTerminateQuery(msg string) (string, bool) {
 	return "TERMINATE " + strings.Join(queries, ", ") + ";", true
 }
 
-func (c *Client) makePostKsqlRequest(ctx context.Context, query string) (Response, error) {
+func (c *Client) makePostKsqlRequestWithUnmarshal(ctx context.Context, query string, unmarshal func(in io.Reader) error) error {
 	b, err := json.Marshal(map[string]interface{}{"ksql": query})
 	if err != nil {
-		return Response{}, err
+		return err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s/ksql", c.url), bytes.NewBuffer(b))
 	if err != nil {
-		return Response{}, err
+		return err
 	}
 	req.SetBasicAuth(c.username, c.password)
 
 	resp, err := c.cli.Do(req)
 	if err != nil {
-		return Response{}, err
+		return err
 	}
 
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return Response{}, err
+	if err = unmarshal(resp.Body); err != nil {
+		return err
 	}
 
-	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		return Response{}, nil
-	}
-
-	res := &Response{}
-	err = json.Unmarshal(body, res)
-	if err != nil {
-		return Response{}, fmt.Errorf("failed to unmarshal: %s, err: %v", string(body), err)
-	}
-
-	return *res, nil
+	return nil
 }
 
 func ExtractNameFromQuery(query string) string {
