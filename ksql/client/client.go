@@ -84,7 +84,9 @@ func (c *Client) ExecuteQuery(ctx context.Context, name, qType, query string, ig
 			if ignoreAlreadyExists && strings.Contains(resErrMessage, "already exists") {
 				break
 			}
-			if terminatePersistentQuery && strings.Contains(resErrMessage, "Upgrades not yet supported") {
+			if terminatePersistentQuery ||
+				strings.Contains(resErrMessage, "Upgrades not yet supported") ||
+				strings.Contains(resErrMessage, "Cannot drop") {
 				if err = c.terminatePersistentQuery(ctx, name); err != nil {
 					err = fmt.Errorf("failed to terminate persistent query: %v", err)
 				}

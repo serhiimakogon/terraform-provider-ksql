@@ -33,14 +33,16 @@ func (c *Client) terminatePersistentQuery(ctx context.Context, name string) erro
 		}
 	}
 
-	var termRes []map[string]interface{}
+	var termRes interface{}
 
-	err = c.makePostKsqlRequestWithUnmarshal(ctx,
-		fmt.Sprintf("TERMINATE %s ;", strings.Join(terminateQueries, ", ")),
-		func(r io.Reader) error { return json.NewDecoder(r).Decode(&termRes) },
-	)
-	if err != nil {
-		return err
+	for _, query := range terminateQueries {
+		err = c.makePostKsqlRequestWithUnmarshal(ctx,
+			fmt.Sprintf("TERMINATE %s ;", query),
+			func(r io.Reader) error { return json.NewDecoder(r).Decode(&termRes) },
+		)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
