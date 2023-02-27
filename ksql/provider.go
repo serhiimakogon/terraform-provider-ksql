@@ -34,6 +34,13 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("KSQL_PASSWORD", ""),
 				Description: "The KSQL password.",
 			},
+			"auto_offset_reset": {
+				Description: "Auto offset reset mode.",
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Default:     false,
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"ksql_query": resourceQuery(),
