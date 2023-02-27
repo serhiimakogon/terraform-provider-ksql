@@ -58,6 +58,13 @@ func resourceQuery() *schema.Resource {
 				ForceNew:    true,
 				Default:     false,
 			},
+			"auto_offset_reset": {
+				Description: "Auto offset reset mode.",
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Default:     false,
+			},
 			"credentials": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -160,9 +167,15 @@ func resourceQueryDelete(ctx context.Context, d *schema.ResourceData, m interfac
 		deleteTopicOnDestroy     = d.Get("delete_topic_on_destroy").(bool)
 		ignoreAlreadyExists      = d.Get("ignore_already_exists").(bool)
 		terminatePersistentQuery = d.Get("terminate_persistent_query").(bool)
+		autoOffsetResetMode      = d.Get("auto_offset_reset").(string)
 	)
 
+	autoOffsetResetQueryParameter := cli.ResolveAutoOffsetResetQueryProperty(autoOffsetResetMode)
+
 	buf := &bytes.Buffer{}
+	if autoOffsetResetQueryParameter != "" {
+		buf.WriteString(autoOffsetResetQueryParameter)
+	}
 	buf.WriteString("DROP ")
 	buf.WriteString(queryType)
 	buf.WriteString(" IF EXISTS ")

@@ -15,18 +15,20 @@ import (
 )
 
 type Client struct {
-	cli      *http.Client
-	url      string
-	username string
-	password string
+	cli                 *http.Client
+	url                 string
+	username            string
+	password            string
+	autoOffsetResetMode string
 }
 
-func New(url, username, password string) *Client {
+func New(url, username, password, autoOffsetResetMode string) *Client {
 	return &Client{
-		url:      url,
-		username: username,
-		password: password,
-		cli:      &http.Client{},
+		url:                 url,
+		username:            username,
+		password:            password,
+		autoOffsetResetMode: autoOffsetResetMode,
+		cli:                 &http.Client{},
 	}
 }
 
@@ -40,6 +42,19 @@ func (c *Client) RotateCredentials(url, username, password string) {
 	if password != "" {
 		c.password = password
 	}
+}
+
+func (c *Client) ResolveAutoOffsetResetQueryProperty(mode string) string {
+	const pattern = "SET 'auto.offset.reset'='%s';"
+
+	if mode != "" {
+		return fmt.Sprintf(pattern, mode)
+	}
+	if c.autoOffsetResetMode != "" {
+		return fmt.Sprintf(pattern, c.autoOffsetResetMode)
+	}
+
+	return ""
 }
 
 func (c *Client) ExecuteQuery(ctx context.Context, name, qType, query string, ignoreAlreadyExists, terminatePersistentQuery bool) (string, error) {

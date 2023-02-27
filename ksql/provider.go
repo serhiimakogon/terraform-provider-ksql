@@ -47,10 +47,15 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	tflog.Info(ctx, "Initializing Terraform Provider for KSQL")
 
 	var (
-		url      = d.Get("url").(string)
-		username = d.Get("username").(string)
-		password = d.Get("password").(string)
+		url                 = d.Get("url").(string)
+		username            = d.Get("username").(string)
+		password            = d.Get("password").(string)
+		autoOffsetResetMode = d.Get("auto_offset_reset").(string)
 	)
 
-	return client.New(url, username, password), nil
+	if autoOffsetResetMode != "earliest" && autoOffsetResetMode != "latest" {
+		return nil, diag.Errorf("invalid auto_offset_reset mode: %s", autoOffsetResetMode)
+	}
+
+	return client.New(url, username, password, autoOffsetResetMode), nil
 }
