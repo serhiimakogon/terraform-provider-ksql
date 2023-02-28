@@ -41,7 +41,7 @@ func Provider() *schema.Provider {
 				Optional:    true,
 				ForceNew:    true,
 				MaxItems:    1,
-				MinItems:    1,
+				MinItems:    0,
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
