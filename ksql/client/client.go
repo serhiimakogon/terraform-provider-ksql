@@ -44,12 +44,9 @@ func (c *Client) RotateCredentials(url, username, password string) {
 	}
 }
 
-func (c *Client) ResolveAutoOffsetResetQueryProperty(mode string) string {
+func (c *Client) ResolveAutoOffsetResetQueryProperty() string {
 	const pattern = "SET 'auto.offset.reset'='%s';"
 
-	if mode != "" && mode != "0" {
-		return fmt.Sprintf(pattern, mode)
-	}
 	if c.autoOffsetResetMode != "" {
 		return fmt.Sprintf(pattern, c.autoOffsetResetMode)
 	}
