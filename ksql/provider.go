@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"terraform-provider-ksql/ksql/client"
+	"terraform-provider-ksql/ksql/model"
 )
 
 func Provider() *schema.Provider {
@@ -34,12 +35,13 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("KSQL_PASSWORD", ""),
 				Description: "The KSQL password.",
 			},
-			"auto_offset_reset": {
-				Description: "Auto offset reset mode.",
-				Type:        schema.TypeString,
+			"query_properties": {
+				Description: "Map of query properties",
+				Type:        schema.TypeMap,
 				Optional:    true,
 				ForceNew:    true,
-				Default:     false,
+				MaxItems:    1,
+				MinItems:    1,
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
@@ -54,15 +56,11 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	tflog.Info(ctx, "Initializing Terraform Provider for KSQL")
 
 	var (
-		url                 = d.Get("url").(string)
-		username            = d.Get("username").(string)
-		password            = d.Get("password").(string)
-		autoOffsetResetMode = d.Get("auto_offset_reset").(string)
+		url             = d.Get("url").(string)
+		username        = d.Get("username").(string)
+		password        = d.Get("password").(string)
+		queryProperties = d.Get("query_properties").(map[string]interface{})
 	)
 
-	if autoOffsetResetMode != "earliest" && autoOffsetResetMode != "latest" {
-		return nil, diag.Errorf("invalid auto_offset_reset mode: %s", autoOffsetResetMode)
-	}
-
-	return client.New(url, username, password, autoOffsetResetMode), nil
+	return client.New(url, username, password, model.NewQueryProperties(queryProperties)), nil
 }

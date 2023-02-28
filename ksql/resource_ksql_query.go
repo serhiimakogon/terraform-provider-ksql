@@ -1,7 +1,6 @@
 package ksql
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"terraform-provider-ksql/ksql/client"
+	"terraform-provider-ksql/ksql/model"
 )
 
 func resourceQuery() *schema.Resource {
@@ -57,6 +57,14 @@ func resourceQuery() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 				Default:     false,
+			},
+			"query_properties": {
+				Description: "Map of query properties",
+				Type:        schema.TypeMap,
+				Optional:    true,
+				ForceNew:    true,
+				MaxItems:    1,
+				MinItems:    1,
 			},
 			"credentials": {
 				Type:        schema.TypeList,
@@ -111,27 +119,30 @@ func resourceQueryCreate(ctx context.Context, d *schema.ResourceData, m interfac
 
 	var (
 		diags                    diag.Diagnostics
+		queryType                = "create"
 		name                     = d.Get("name").(string)
-		qType                    = d.Get("type").(string)
-		query                    = d.Get("query").(string)
+		queryContent             = d.Get("query").(string)
+		resourceType             = d.Get("type").(string)
 		ignoreAlreadyExists      = d.Get("ignore_already_exists").(bool)
+		deleteTopicOnDestroy     = d.Get("delete_topic_on_destroy").(bool)
 		terminatePersistentQuery = d.Get("terminate_persistent_query").(bool)
+		queryProperties          = d.Get("query_properties").(map[string]interface{})
 	)
 
-	autoOffsetResetQueryParameter := cli.ResolveAutoOffsetResetQueryProperty()
+	eqp := model.NewExecuteQueryRequest(
+		name, queryType, queryContent, resourceType,
+		ignoreAlreadyExists,
+		deleteTopicOnDestroy,
+		terminatePersistentQuery,
+		cli.MergeWithGlobalProperties(model.NewQueryProperties(queryProperties)),
+	)
 
-	buf := &bytes.Buffer{}
-	if autoOffsetResetQueryParameter != "" {
-		buf.WriteString(autoOffsetResetQueryParameter)
-	}
-	buf.WriteString(query)
-
-	id, err := cli.ExecuteQuery(context.Background(), name, qType, buf.String(), ignoreAlreadyExists, terminatePersistentQuery)
+	err := cli.ExecuteQuery(ctx, eqp)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId(id)
+	d.SetId(eqp.ID())
 
 	return diags
 }
@@ -145,11 +156,26 @@ func resourceQueryRead(ctx context.Context, d *schema.ResourceData, m interface{
 	)
 
 	var (
-		diags diag.Diagnostics
-		query = d.Get("query").(string)
+		diags                    diag.Diagnostics
+		queryType                = "read"
+		name                     = d.Get("name").(string)
+		queryContent             = d.Get("query").(string)
+		resourceType             = d.Get("type").(string)
+		ignoreAlreadyExists      = d.Get("ignore_already_exists").(bool)
+		deleteTopicOnDestroy     = d.Get("delete_topic_on_destroy").(bool)
+		terminatePersistentQuery = d.Get("terminate_persistent_query").(bool)
+		queryProperties          = d.Get("query_properties").(map[string]interface{})
 	)
 
-	tflog.Info(ctx, fmt.Sprintf("Going to read object [%s]", client.ExtractNameFromQuery(query)))
+	eqp := model.NewExecuteQueryRequest(
+		name, queryType, queryContent, resourceType,
+		ignoreAlreadyExists,
+		deleteTopicOnDestroy,
+		terminatePersistentQuery,
+		cli.MergeWithGlobalProperties(model.NewQueryProperties(queryProperties)),
+	)
+
+	tflog.Info(ctx, fmt.Sprintf("Going to read object [%s]", eqp.ID()))
 
 	return diags
 }
@@ -163,32 +189,29 @@ func resourceQueryDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	)
 
 	var (
-		queryType                = d.Get("type").(string)
-		queryName                = d.Get("name").(string)
-		deleteTopicOnDestroy     = d.Get("delete_topic_on_destroy").(bool)
+		diags                    diag.Diagnostics
+		queryType                = "delete"
+		name                     = d.Get("name").(string)
+		queryContent             = d.Get("query").(string)
+		resourceType             = d.Get("type").(string)
 		ignoreAlreadyExists      = d.Get("ignore_already_exists").(bool)
+		deleteTopicOnDestroy     = d.Get("delete_topic_on_destroy").(bool)
 		terminatePersistentQuery = d.Get("terminate_persistent_query").(bool)
+		queryProperties          = d.Get("query_properties").(map[string]interface{})
 	)
 
-	autoOffsetResetQueryParameter := cli.ResolveAutoOffsetResetQueryProperty()
+	eqp := model.NewExecuteQueryRequest(
+		name, queryType, queryContent, resourceType,
+		ignoreAlreadyExists,
+		deleteTopicOnDestroy,
+		terminatePersistentQuery,
+		cli.MergeWithGlobalProperties(model.NewQueryProperties(queryProperties)),
+	)
 
-	buf := &bytes.Buffer{}
-	if autoOffsetResetQueryParameter != "" {
-		buf.WriteString(autoOffsetResetQueryParameter)
-	}
-	buf.WriteString("DROP ")
-	buf.WriteString(queryType)
-	buf.WriteString(" IF EXISTS ")
-	buf.WriteString(queryName)
-	if deleteTopicOnDestroy {
-		buf.WriteString(" DELETE TOPIC ")
-	}
-	buf.WriteString(" ;")
-
-	_, err := cli.ExecuteQuery(ctx, queryName, queryType, buf.String(), ignoreAlreadyExists, terminatePersistentQuery)
+	err := cli.ExecuteQuery(ctx, eqp)
 	if err != nil {
-		return diag.Errorf("failed to drop ksql resource %q: %s", d.Id(), err)
+		return diag.FromErr(err)
 	}
 
-	return nil
+	return diags
 }

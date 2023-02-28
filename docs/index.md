@@ -18,5 +18,6 @@ description: |-
 ### Optional
 
 - `password` (String, Sensitive) The KSQL password.
+- `query_properties` (Map of String) Map of query properties
 - `url` (String, Sensitive) The KSQL URL.
 - `username` (String, Sensitive) The KSQL username.
