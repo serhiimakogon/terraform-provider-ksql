@@ -120,6 +120,7 @@ func (c *Client) makePostKsqlRequestWithUnmarshal(ctx context.Context, query str
 }
 
 func (c *Client) parseErrorResponse(res any) (float64, string) {
+	tflog.Info(context.Background(), "ksqldb response", map[string]interface{}{"res": res})
 	switch g := res.(type) {
 	case []interface{}:
 		if len(g) == 0 {
