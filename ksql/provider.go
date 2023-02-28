@@ -40,8 +40,6 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeMap,
 				Optional:    true,
 				ForceNew:    true,
-				MaxItems:    1,
-				MinItems:    0,
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{

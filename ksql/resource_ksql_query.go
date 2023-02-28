@@ -63,8 +63,6 @@ func resourceQuery() *schema.Resource {
 				Type:        schema.TypeMap,
 				Optional:    true,
 				ForceNew:    true,
-				MaxItems:    1,
-				MinItems:    0,
 			},
 			"credentials": {
 				Type:        schema.TypeList,
