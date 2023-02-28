@@ -19,10 +19,10 @@ type Client struct {
 	url        string
 	username   string
 	password   string
-	properties *model.QueryProperties
+	properties model.QueryProperties
 }
 
-func New(url, username, password string, properties *model.QueryProperties) *Client {
+func New(url, username, password string, properties model.QueryProperties) *Client {
 	return &Client{
 		url:        url,
 		username:   username,
