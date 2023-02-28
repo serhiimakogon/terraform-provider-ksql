@@ -118,7 +118,15 @@ func resourceQueryCreate(ctx context.Context, d *schema.ResourceData, m interfac
 		terminatePersistentQuery = d.Get("terminate_persistent_query").(bool)
 	)
 
-	id, err := cli.ExecuteQuery(context.Background(), name, qType, query, ignoreAlreadyExists, terminatePersistentQuery)
+	autoOffsetResetQueryParameter := cli.ResolveAutoOffsetResetQueryProperty()
+
+	buf := &bytes.Buffer{}
+	if autoOffsetResetQueryParameter != "" {
+		buf.WriteString(autoOffsetResetQueryParameter)
+	}
+	buf.WriteString(query)
+
+	id, err := cli.ExecuteQuery(context.Background(), name, qType, buf.String(), ignoreAlreadyExists, terminatePersistentQuery)
 	if err != nil {
 		return diag.FromErr(err)
 	}
