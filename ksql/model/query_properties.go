@@ -13,8 +13,8 @@ type QueryProperties struct {
 	val map[string]string
 }
 
-func NewQueryProperties(in map[string]interface{}) *QueryProperties {
-	qp := &QueryProperties{val: make(map[string]string, len(in))}
+func NewQueryProperties(in map[string]interface{}) QueryProperties {
+	qp := QueryProperties{val: make(map[string]string, len(in))}
 
 	for key, value := range in {
 		val, ok := value.(string)
@@ -30,8 +30,8 @@ func NewQueryProperties(in map[string]interface{}) *QueryProperties {
 	return qp
 }
 
-func (qp *QueryProperties) Merge(in *QueryProperties) *QueryProperties {
-	res := &QueryProperties{val: make(map[string]string)}
+func (qp QueryProperties) Merge(in QueryProperties) QueryProperties {
+	res := QueryProperties{val: make(map[string]string)}
 
 	for key, val := range qp.val {
 		res.val[key] = val
@@ -44,8 +44,8 @@ func (qp *QueryProperties) Merge(in *QueryProperties) *QueryProperties {
 	return res
 }
 
-func (qp *QueryProperties) MergeWithQueryContent(content string) *QueryProperties {
-	res := &QueryProperties{val: make(map[string]string)}
+func (qp QueryProperties) MergeWithQueryContent(content string) QueryProperties {
+	res := QueryProperties{val: make(map[string]string)}
 
 	for key, val := range qp.val {
 		res.val[key] = val
@@ -65,7 +65,7 @@ func (qp *QueryProperties) MergeWithQueryContent(content string) *QueryPropertie
 	return res
 }
 
-func (qp *QueryProperties) ToQueryContent() string {
+func (qp QueryProperties) ToQueryContent() string {
 	buf := &bytes.Buffer{}
 
 	for key, val := range qp.val {

@@ -16,13 +16,13 @@ type ExecuteQueryRequest struct {
 	ignoreAlreadyExists      bool
 	deleteTopicOnDestroy     bool
 	terminatePersistentQuery bool
-	properties               *QueryProperties
+	properties               QueryProperties
 }
 
 func NewExecuteQueryRequest(
 	name, queryType, queryContent, resourceType string,
 	ignoreAlreadyExists, deleteTopicOnDestroy, terminatePersistentQuery bool,
-	properties *QueryProperties) *ExecuteQueryRequest {
+	properties QueryProperties) *ExecuteQueryRequest {
 	return &ExecuteQueryRequest{
 		name:                     name,
 		queryType:                queryType,

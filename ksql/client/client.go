@@ -32,7 +32,7 @@ func New(url, username, password string, properties *model.QueryProperties) *Cli
 	}
 }
 
-func (c *Client) MergeWithGlobalProperties(in *model.QueryProperties) *model.QueryProperties {
+func (c *Client) MergeWithGlobalProperties(in model.QueryProperties) model.QueryProperties {
 	return c.properties.Merge(in)
 }
 
@@ -120,18 +120,21 @@ func (c *Client) makePostKsqlRequestWithUnmarshal(ctx context.Context, query str
 }
 
 func (c *Client) parseErrorResponse(res any) (float64, string) {
-	tflog.Info(context.Background(), "ksqldb response", map[string]interface{}{"res": res})
 	switch g := res.(type) {
 	case []interface{}:
 		if len(g) == 0 {
 			return 0, ""
 		}
+		errCode, _ := g[0].(map[string]interface{})["error_code"].(float64)
+		errMessage, _ := g[0].(map[string]interface{})["message"].(string)
 
-		return g[0].(map[string]interface{})["error_code"].(float64),
-			g[0].(map[string]interface{})["message"].(string)
+		return errCode, errMessage
 
 	case map[string]interface{}:
-		return g["error_code"].(float64), g["message"].(string)
+		errCode, _ := g["error_code"].(float64)
+		errMessage, _ := g["message"].(string)
+
+		return errCode, errMessage
 
 	default:
 		return 0, ""
