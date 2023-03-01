@@ -52,11 +52,14 @@ func (qp QueryProperties) MergeWithQueryContent(content string) QueryProperties 
 	}
 
 	for _, part := range strings.Split(content, ";") {
+		part = strings.TrimSpace(part)
 		if strings.HasPrefix(part, "SET") {
+			part = strings.TrimSpace(part)
 			part = strings.TrimPrefix(part, "SET ")
+
 			kvParts := strings.Split(part, "=")
-			key := strings.TrimLeft(strings.TrimRight(kvParts[0], "'"), "'")
-			val := strings.TrimLeft(strings.TrimRight(kvParts[1], "'"), "'")
+			key := strings.TrimLeft(strings.TrimRight(strings.TrimSpace(kvParts[0]), "'"), "'")
+			val := strings.TrimLeft(strings.TrimRight(strings.TrimSpace(kvParts[1]), "'"), "'")
 
 			res.val[key] = val
 		}
