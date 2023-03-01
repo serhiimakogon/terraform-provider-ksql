@@ -66,7 +66,7 @@ func (c *Client) ExecuteQuery(ctx context.Context, query *model.ExecuteQueryRequ
 			func(r io.Reader) error { return json.NewDecoder(r).Decode(&res) },
 		)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("failed to make post ksql request [%v] retrying...", err))
+			tflog.Warn(ctx, "failed to make post ksql request retrying...", map[string]interface{}{"err": err})
 			time.Sleep(backoff)
 			continue
 		}
@@ -75,6 +75,7 @@ func (c *Client) ExecuteQuery(ctx context.Context, query *model.ExecuteQueryRequ
 		if errCode == 0 {
 			break
 		}
+		tflog.Warn(ctx, "got errored response", map[string]interface{}{"err_code": errCode, "err_message": errMessage})
 
 		if query.CheckAlreadyExistsError(errMessage) {
 			break
@@ -86,7 +87,7 @@ func (c *Client) ExecuteQuery(ctx context.Context, query *model.ExecuteQueryRequ
 			}
 		}
 
-		tflog.Warn(ctx, "make post ksql request retrying...", map[string]interface{}{"err": err})
+		tflog.Warn(ctx, "make post ksql request retrying", map[string]interface{}{"err": err})
 		time.Sleep(backoff)
 	}
 
