@@ -87,7 +87,7 @@ func (c *Client) ExecuteQuery(ctx context.Context, query *model.ExecuteQueryRequ
 			}
 		}
 
-		tflog.Warn(ctx, "make post ksql request retrying", map[string]interface{}{"err": err})
+		tflog.Warn(ctx, "make post ksql request retrying", map[string]interface{}{"err": err, "err_code": errCode, "err_message": errMessage})
 		time.Sleep(backoff)
 	}
 
