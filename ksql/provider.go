@@ -40,6 +40,7 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeMap,
 				Optional:    true,
 				ForceNew:    true,
+				Default:     map[string]interface{}{},
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{

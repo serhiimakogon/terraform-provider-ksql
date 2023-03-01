@@ -63,6 +63,7 @@ func resourceQuery() *schema.Resource {
 				Type:        schema.TypeMap,
 				Optional:    true,
 				ForceNew:    true,
+				Default:     map[string]interface{}{},
 			},
 			"credentials": {
 				Type:        schema.TypeList,
