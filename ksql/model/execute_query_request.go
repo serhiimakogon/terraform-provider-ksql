@@ -104,5 +104,5 @@ func sanitizeQueryContent(content string) string {
 		res = append(res, part)
 	}
 
-	return strings.Join(res, " ")
+	return strings.Join(res, ";")
 }

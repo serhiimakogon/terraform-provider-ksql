@@ -66,6 +66,10 @@ func (qp QueryProperties) MergeWithQueryContent(content string) QueryProperties 
 }
 
 func (qp QueryProperties) ToQueryContent() string {
+	if len(qp.val) == 0 {
+		return ""
+	}
+
 	buf := &bytes.Buffer{}
 
 	for key, val := range qp.val {
