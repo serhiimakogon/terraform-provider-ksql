@@ -75,6 +75,8 @@ func (c *Client) ExecuteQuery(ctx context.Context, query *model.ExecuteQueryRequ
 		if errCode == 0 {
 			break
 		}
+
+		err = fmt.Errorf("err response: %s, err code: %f", errMessage, errCode)
 		tflog.Warn(ctx, "got errored response", map[string]interface{}{"err_code": errCode, "err_message": errMessage})
 
 		if query.CheckAlreadyExistsError(errMessage) {
